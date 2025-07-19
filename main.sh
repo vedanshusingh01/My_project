@@ -1,0 +1,13 @@
+/client
+  /src
+    /components
+    /pages
+    /services
+    /context
+/server
+  /routes
+  /controllers
+  /models
+  /middleware
+  /config
+.env
