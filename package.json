@@ -1,4 +1,3 @@
-
 {
   "name": "health-tracker-app",
   "version": "1.0.0",
@@ -13,5 +12,13 @@
   },
   "devDependencies": {
     "concurrently": "^7.6.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.4",
+    "react": "^19.1.0",
+    "recharts": "^3.1.0"
   }
 }
