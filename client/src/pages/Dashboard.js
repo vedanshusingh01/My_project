@@ -1,54 +1,85 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getBmiHistory, getMetrics, getTasks } from '../services/api';
+import BmiCalculator from '../components/BmiCalculator';
+import MetricsForm from '../components/MetricsForm';
+import TaskManager from '../components/TaskManager';
+import ProgressChart from '../components/ProgressChart';
+import { getLatestBmi, getMetrics, getTodayMetrics } from '../services/api';
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const [bmiData, setBmiData] = useState([]);
+  const { user, logout } = useAuth();
+  const [latestBmi, setLatestBmi] = useState(null);
   const [metricsData, setMetricsData] = useState([]);
-  const [tasks, setTasks] = useState([]);
+  const [todayMetrics, setTodayMetrics] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [bmi, metrics, userTasks] = await Promise.all([
-          getBmiHistory(),
-          getMetrics(),
-          getTasks()
-        ]);
-        setBmiData(bmi);
-        setMetricsData(metrics);
-        setTasks(userTasks);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      }
-    };
-
-    fetchData();
+    loadDashboardData();
   }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      const [bmiData, weeklyMetrics, todayData] = await Promise.all([
+        getLatestBmi(),
+        getMetrics(7),
+        getTodayMetrics()
+      ]);
+      
+      setLatestBmi(bmiData);
+      setMetricsData(weeklyMetrics);
+      setTodayMetrics(todayData);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMetricsUpdate = () => {
+    loadDashboardData();
+  };
+
+  const handleBmiUpdate = () => {
+    loadDashboardData();
+  };
+
+  if (loading) {
+    return <div className="loading">Loading dashboard...</div>;
+  }
 
   return (
     <div className="dashboard">
-      <h1>Welcome to your Health Dashboard</h1>
+      <header className="dashboard-header">
+        <h1>Welcome, {user?.username}!</h1>
+        <button onClick={logout} className="logout-btn">Logout</button>
+      </header>
+      
       <div className="dashboard-grid">
-        <div className="card">
-          <h3>Latest BMI</h3>
-          {bmiData[0] && <p>{bmiData[0].bmi}</p>}
-        </div>
-        <div className="card">
-          <h3>Today's Tasks</h3>
-          {tasks.map(task => (
-            <div key={task._id}>{task.title}</div>
-          ))}
-        </div>
-        <div className="card">
-          <h3>Recent Metrics</h3>
-          {metricsData.slice(0, 3).map(metric => (
-            <div key={metric._id}>
-              Weight: {metric.weight}kg, Sleep: {metric.sleepHours}h
+        <div className="dashboard-card">
+          <h2>BMI Calculator</h2>
+          <BmiCalculator onUpdate={handleBmiUpdate} />
+          {latestBmi && (
+            <div className="latest-bmi">
+              <p>Latest BMI: <strong>{latestBmi.bmi}</strong></p>
+              <p>Recorded: {new Date(latestBmi.createdAt).toLocaleDateString()}</p>
             </div>
-          ))}
+          )}
+        </div>
+
+        <div className="dashboard-card">
+          <h2>Today's Metrics</h2>
+          <MetricsForm initialData={todayMetrics} onUpdate={handleMetricsUpdate} />
+        </div>
+
+        <div className="dashboard-card">
+          <h2>Health Tasks</h2>
+          <TaskManager />
+        </div>
+
+        <div className="dashboard-card chart-card">
+          <h2>Weekly Progress</h2>
+          <ProgressChart data={metricsData} />
         </div>
       </div>
     </div>

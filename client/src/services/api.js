@@ -1,83 +1,112 @@
 
-import axios from 'axios';
-
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-// Add token to requests if available
-api.interceptors.request.use((config) => {
+const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
-// Auth services
+const apiCall = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  const response = await fetch(url, config);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Something went wrong');
+  }
+
+  return data;
+};
+
+// Auth API
 export const registerUser = async (userData) => {
-  const response = await api.post('/auth/register', userData);
-  return response.data;
+  return apiCall('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  });
 };
 
 export const loginUser = async (credentials) => {
-  const response = await api.post('/auth/login', credentials);
-  return response.data;
+  return apiCall('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
 };
 
-// BMI services
+// BMI API
 export const saveBmiRecord = async (bmiData) => {
-  const response = await api.post('/bmi', bmiData);
-  return response.data;
+  return apiCall('/bmi', {
+    method: 'POST',
+    body: JSON.stringify(bmiData),
+  });
 };
 
-export const getBmiRecords = async () => {
-  const response = await api.get('/bmi');
-  return response.data;
+export const getBmiHistory = async () => {
+  return apiCall('/bmi');
 };
 
-// Health metrics services
-export const saveHealthMetrics = async (metricsData) => {
-  const response = await api.post('/metrics', metricsData);
-  return response.data;
+export const getLatestBmi = async () => {
+  return apiCall('/bmi/latest');
 };
 
-export const getHealthMetrics = async (range = 7) => {
-  const response = await api.get(`/metrics?range=${range}`);
-  return response.data;
+// Metrics API
+export const saveMetrics = async (metricsData) => {
+  return apiCall('/metrics', {
+    method: 'POST',
+    body: JSON.stringify(metricsData),
+  });
 };
 
-// Task services
-export const getTasks = async () => {
-  const response = await api.get('/tasks');
-  return response.data;
+export const getMetrics = async (range = 7) => {
+  return apiCall(`/metrics?range=${range}`);
 };
 
+export const getTodayMetrics = async () => {
+  return apiCall('/metrics/today');
+};
+
+// Tasks API
 export const createTask = async (taskData) => {
-  const response = await api.post('/tasks', taskData);
-  return response.data;
+  return apiCall('/tasks', {
+    method: 'POST',
+    body: JSON.stringify(taskData),
+  });
+};
+
+export const getTasks = async () => {
+  return apiCall('/tasks');
+};
+
+export const getTasksWithCompletion = async (date) => {
+  const dateParam = date ? `?date=${date}` : '';
+  return apiCall(`/tasks/with-completion${dateParam}`);
 };
 
 export const updateTask = async (taskId, taskData) => {
-  const response = await api.put(`/tasks/${taskId}`, taskData);
-  return response.data;
+  return apiCall(`/tasks/${taskId}`, {
+    method: 'PUT',
+    body: JSON.stringify(taskData),
+  });
 };
 
 export const deleteTask = async (taskId) => {
-  const response = await api.delete(`/tasks/${taskId}`);
-  return response.data;
+  return apiCall(`/tasks/${taskId}`, {
+    method: 'DELETE',
+  });
 };
 
-export const markTaskComplete = async (taskId, date) => {
-  const response = await api.post(`/tasks/${taskId}/complete`, { date });
-  return response.data;
+export const toggleTaskCompletion = async (taskId, date) => {
+  return apiCall(`/tasks/${taskId}/toggle`, {
+    method: 'POST',
+    body: JSON.stringify({ date }),
+  });
 };
-
-export const getDailyTasks = async (date) => {
-  const response = await api.get(`/tasks/daily?date=${date}`);
-  return response.data;
-};
-
-export default api;

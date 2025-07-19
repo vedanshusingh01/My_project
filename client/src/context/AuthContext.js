@@ -1,6 +1,4 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { loginUser } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -10,53 +8,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app start
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-      // You might want to validate the token here
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const response = await loginUser({ email, password });
-      const { token } = response;
-      
-      localStorage.setItem('token', token);
-      setToken(token);
-      
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Login failed' 
-      };
-    }
+  const login = (token, userData) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(token);
+    setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
   };
 
-  const isAuthenticated = () => {
-    return !!token;
-  };
-
-  const value = {
-    token,
-    user,
-    login,
-    logout,
-    isAuthenticated,
-    loading
-  };
+  const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ 
+      token, 
+      user, 
+      login, 
+      logout, 
+      isAuthenticated,
+      loading 
+    }}>
       {children}
     </AuthContext.Provider>
   );

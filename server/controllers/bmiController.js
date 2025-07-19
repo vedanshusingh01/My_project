@@ -1,32 +1,38 @@
 
 const Bmi = require('../models/Bmi');
 
-exports.createBmi = async (req, res) => {
+exports.saveBmi = async (req, res) => {
   try {
-    const { height, weight } = req.body;
-    const bmi = (weight / (height * height)).toFixed(2);
+    const { height, weight, bmi } = req.body;
     
-    const newBmi = new Bmi({
-      user: req.user._id,
+    const bmiRecord = new Bmi({
+      user: req.user,
       height,
       weight,
-      bmi: parseFloat(bmi)
+      bmi
     });
     
-    await newBmi.save();
-    res.status(201).json(newBmi);
+    await bmiRecord.save();
+    res.status(201).json({ message: 'BMI record saved successfully', bmiRecord });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 exports.getBmiHistory = async (req, res) => {
   try {
-    const bmiRecords = await Bmi.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(10);
+    const bmiRecords = await Bmi.find({ user: req.user }).sort({ createdAt: -1 });
     res.json(bmiRecords);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+exports.getLatestBmi = async (req, res) => {
+  try {
+    const latestBmi = await Bmi.findOne({ user: req.user }).sort({ createdAt: -1 });
+    res.json(latestBmi);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
