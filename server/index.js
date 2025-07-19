@@ -17,13 +17,15 @@ app.use('/api/bmi', require('./routes/bmi'));
 app.use('/api/metrics', require('./routes/metrics'));
 app.use('/api/tasks', require('./routes/tasks'));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/healthtracker', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.log(err));
+// Basic route
+app.get('/', (req, res) => {
+  res.json({ message: 'Health Tracker API is running!' });
+});
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/healthtracker')
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('MongoDB connection error:', err));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
