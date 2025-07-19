@@ -7,3 +7,32 @@ channel = "stable-24_05"
 [deployment]
 run = ["bash", "main.sh"]
 deploymentTarget = "cloudrun"
+
+[workflows]
+runButton = "Dev Server"
+
+[[workflows.workflow]]
+name = "Start Development"
+author = 41223764
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm run dev"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd client && npm start"
+
+[[workflows.workflow]]
+name = "Dev Server"
+author = 41223764
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd server && npm run dev"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd client && npm start"
